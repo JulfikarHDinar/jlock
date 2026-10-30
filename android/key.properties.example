@@ -1,0 +1,6 @@
+# Copy this file to key.properties in this folder (git-ignored) and fill in the values.
+# Never commit key.properties or the .jks file. See docs/RELEASING.md.
+storeFile=/home/YOUR_USER/AndroidApp/keys/jlock-release.jks
+storePassword=
+keyAlias=jlock
+keyPassword=

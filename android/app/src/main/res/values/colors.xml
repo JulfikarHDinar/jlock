@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launch window colors: the default Graphite ground, and a neutral light one for the light themes. -->
+    <color name="splash">#1C1A17</color>
+    <color name="splash_light">#F6F8FB</color>
+</resources>

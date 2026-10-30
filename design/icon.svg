@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72" width="512" height="512">
+  <!-- Same drawing as the launcher icon (android/app/src/main/res/drawable/ic_launcher_*.xml). -->
+  <defs>
+    <linearGradient id="ground" gradientUnits="userSpaceOnUse" x1="18" y1="18" x2="90" y2="90">
+      <stop offset="0" stop-color="#4338CA"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="72" height="72" rx="21.6" fill="url(#ground)"/>
+  <path d="M43,51 V41 A11,11 0 0 1 65,41 V51" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+  <path d="M44,50 H64 A8,8 0 0 1 72,58 V72 A8,8 0 0 1 64,80 H44 A8,8 0 0 1 36,72 V58 A8,8 0 0 1 44,50 Z" fill="#FFFFFF"/>
+  <path d="M51.8,66.08 A4.2,4.2 0 1 1 56.2,66.08 V69.3 A2.2,2.2 0 0 1 51.8,69.3 Z" fill="#5B3BD9"/>
+</svg>

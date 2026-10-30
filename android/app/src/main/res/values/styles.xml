@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shown while the process starts: a plain dark window, removed at Flutter's first frame. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/splash</item>
+    </style>
+    <!-- The usage-access lock screen: opaque from the first frame (window painted the lock colour before
+         content inflates, so no app content flashes), no window animation. -->
+    <style name="LockActivityTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/splash</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

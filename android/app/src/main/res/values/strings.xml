@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">jLock</string>
+    <string name="accessibility_label">jLock</string>
+    <string name="accessibility_description">jLock uses this only to see which app is in the foreground so it can show your lock screen. It does not read, store, or send screen content.</string>
+    <string name="notification_label">jLock notification privacy</string>
+</resources>

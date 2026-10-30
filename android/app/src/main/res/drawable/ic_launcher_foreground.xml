@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- jLock mark: a bold white padlock with a violet keyhole, inside the 66-unit safe circle of the 108 canvas. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="7" android:strokeLineCap="round"
+        android:pathData="M43,51 V41 A11,11 0 0 1 65,41 V51" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M44,50 H64 A8,8 0 0 1 72,58 V72 A8,8 0 0 1 64,80 H44 A8,8 0 0 1 36,72 V58 A8,8 0 0 1 44,50 Z" />
+    <path android:fillColor="#FF5B3BD9"
+        android:pathData="M51.8,66.08 A4.2,4.2 0 1 1 56.2,66.08 V69.3 A2.2,2.2 0 0 1 51.8,69.3 Z" />
+</vector>
