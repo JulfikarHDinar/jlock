@@ -127,6 +127,11 @@ class _UnlockScreenState extends State<UnlockScreen> {
   // ---- pattern ----
   void _onPattern(List<int> path) {
     if (_locked || _busy || path.length < 2) return;
+    // Shorter than any pattern jLock accepts: a slip, not a guess, so it never counts toward the lockout.
+    if (path.length < 4) {
+      setState(() => _error = 'Connect at least 4 dots.');
+      return;
+    }
     _pin = path.join('-');
     _submit();
   }

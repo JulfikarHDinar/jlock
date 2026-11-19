@@ -165,7 +165,9 @@ class LockPatternView(
                 MotionEvent.ACTION_MOVE -> { addAt(e.x, e.y); cursor = PointF(e.x, e.y); invalidate() }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     cursor = null; invalidate()
-                    if (path.size >= 2) attempt(path.toList())
+                    // Shorter than any pattern jLock accepts: a slip, not a guess, so it never counts toward the lockout.
+                    if (path.size >= MIN_DOTS) attempt(path.toList())
+                    else if (path.size >= 2) { markError(); message.text = "Connect at least $MIN_DOTS dots" }
                 }
             }
             return true
@@ -187,5 +189,9 @@ class LockPatternView(
                 if (on) canvas.drawCircle(cx(i), cy(i), dot * 2.1f, ringPaint)
             }
         }
+    }
+
+    private companion object {
+        const val MIN_DOTS = 4 // the shortest pattern setup allows (pattern_screen.dart)
     }
 }

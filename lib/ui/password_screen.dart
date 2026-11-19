@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../native.dart';
 import 'brand.dart';
+
+/// The characters the lock screen's own keyboard can type (LockPasswordView.kt). A password using any other one
+/// could be saved here but never entered on the lock, so it is kept out.
+final _typeable = FilteringTextInputFormatter.allow(RegExp(r"""[a-zA-Z0-9@#$_&\-+()/=*"':;!?,. ]"""));
 
 /// Set (and confirm) jLock's own alphanumeric password. Like [PinScreen] but no digits-only filter.
 class PasswordScreen extends StatefulWidget {
@@ -61,7 +66,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
               Text('Choose a password', style: tt.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: 6),
               Text(
-                  'At least 4 characters. jLock stores only a one-way, hardware-encrypted hash — never the password itself.',
+                  'At least 4 characters: letters, numbers, spaces and @ # \$ _ & - + ( ) / = * " \' : ; ! ? , . '
+                  '— the keys on the lock screen. jLock stores only a one-way, hardware-encrypted hash, never the password itself.',
                   style: tt.bodySmall!.copyWith(color: cs.onSurfaceVariant), textAlign: TextAlign.center),
               const SizedBox(height: 28),
               _field(_pw, 'New password', showToggle: true),
@@ -94,6 +100,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
       autocorrect: false,
       enableSuggestions: false,
       maxLength: 64,
+      inputFormatters: [_typeable],
       onChanged: (_) => setState(() => _error = null),
       decoration: InputDecoration(
         hintText: hint,

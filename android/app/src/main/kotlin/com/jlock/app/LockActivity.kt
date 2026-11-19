@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.view.WindowInsets
 import android.widget.FrameLayout
 
 /**
@@ -36,6 +37,12 @@ class LockActivity : Activity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         val root = FrameLayout(this)
         setContentView(root)
+        // Android 15+ draws every app screen edge to edge: keep the lock clear of the bars (its colour still fills them).
+        // Earlier versions place the screen between the bars already, so these insets come in as zero there.
+        root.setOnApplyWindowInsetsListener { v, insets ->
+            insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout()).let { v.setPadding(it.left, it.top, it.right, it.bottom) }
+            insets
+        }
         // Bars in the lock's own colour, with icons that contrast with it.
         LockColors.from(this).let { c ->
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -48,6 +55,10 @@ class LockActivity : Activity() {
             onUnlock = { onUnlocked() },
             onBiometric = { launchBiometric() },
         )
+        // The root holds focus, as on the overlay: otherwise, after a key press (3-button nav sends HOME/BACK as keys) the
+        // first key of the pad took it and showed a focus box around "1".
+        root.isFocusableInTouchMode = true
+        root.requestFocus()
         handleIntent(intent)
     }
 

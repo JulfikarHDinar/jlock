@@ -9,6 +9,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
@@ -16,6 +18,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private val channel = "jlock/native"
@@ -28,22 +31,23 @@ class MainActivity : FlutterActivity() {
                 "isConfigured" -> result.success(LockStore.isConfigured(this))
                 "isOnboarded" -> result.success(LockStore.onboarded(this))
                 "setOnboarded" -> { LockStore.setOnboarded(this); result.success(true) }
+                // Hashed off the main thread (the key derivation takes a moment), so the screen never freezes on Save.
                 "setPin" -> {
                     val pin = call.argument<String>("pin")
                     if (pin.isNullOrEmpty()) result.error("bad_args", "pin required", null)
-                    else { LockStore.setPinCredential(this, CryptoManager.hashSecret(pin), pin.length); result.success(true) }
+                    else saveSecret(pin, result) { LockStore.setPinCredential(this, it, pin.length) }
                 }
                 "setPattern" -> {
                     // The pattern arrives as its node path, e.g. "0-1-2-5-8"; hashed like any other secret.
                     val pattern = call.argument<String>("pattern")
                     if (pattern.isNullOrEmpty()) result.error("bad_args", "pattern required", null)
-                    else { LockStore.setPatternCredential(this, CryptoManager.hashSecret(pattern)); result.success(true) }
+                    else saveSecret(pattern, result) { LockStore.setPatternCredential(this, it) }
                 }
                 "setPassword" -> {
                     // An alphanumeric password; hashed like any other secret (never stored in the clear).
                     val password = call.argument<String>("password")
                     if (password.isNullOrEmpty()) result.error("bad_args", "password required", null)
-                    else { LockStore.setPasswordCredential(this, CryptoManager.hashSecret(password)); result.success(true) }
+                    else saveSecret(password, result) { LockStore.setPasswordCredential(this, it) }
                 }
                 "setMethodEnabled" -> {
                     // Turn a method on/off (biometric flags, or remove a PIN/pattern with on=false).
@@ -157,8 +161,10 @@ class MainActivity : FlutterActivity() {
                     val pkgs = call.argument<List<String>>("pkgs") ?: emptyList()
                     LockStore.setLockedPackages(this, pkgs.toSet()); result.success(true)
                 }
-                "listApps" -> result.success(listLaunchableApps())
-                "appIcon" -> result.success(appIconPng(call.argument<String>("pkg") ?: ""))
+                // Asking the package manager for every app's name, and drawing icons, takes a while: done in the
+                // background so the picker scrolls smoothly.
+                "listApps" -> inBackground(result) { listLaunchableApps() }
+                "appIcon" -> { val pkg = call.argument<String>("pkg") ?: ""; inBackground(result) { appIconPng(pkg) } }
                 "isAccessibilityEnabled" -> result.success(isAccessibilityEnabled())
                 "openAccessibilitySettings" -> {
                     startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -287,9 +293,46 @@ class MainActivity : FlutterActivity() {
         ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName) == AppOpsManager.MODE_ALLOWED
     } catch (_: Throwable) { false }
 
+    private fun saveSecret(secret: String, result: MethodChannel.Result, store: (String) -> Unit) =
+        CryptoManager.hashAsync(secret) { v ->
+            if (v == null) result.error("hash_failed", "couldn't secure the secret", null) else { store(v); result.success(true) }
+        }
+
+    private val background = Executors.newSingleThreadExecutor()
+    private fun inBackground(result: MethodChannel.Result, work: () -> Any?) = background.execute {
+        val r = try { Result.success(work()) } catch (t: Throwable) { Result.failure(t) }
+        runOnUiThread { r.fold({ result.success(it) }, { result.error("failed", it.message, null) }) }
+    }
+
     override fun onResume() {
         super.onResume()
         // Keep the usage-access service alive whenever jLock is opened and that engine is selected.
         UsageAccessLockService.startIfSelected(this)
+    }
+
+    // jLock's screens are opened now and then; left in the background, their Flutter engine would stay in memory for as
+    // long as the lock keeps this process alive. Close them a while after the user leaves (they lock again on return
+    // anyway); the wait keeps a trip to Settings to grant a permission from landing back on the home screen.
+    private val handler = Handler(Looper.getMainLooper())
+    private val closeWhenAway = Runnable { if (!isFinishing) finish() }
+
+    override fun onStart() {
+        super.onStart()
+        handler.removeCallbacks(closeWhenAway)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) handler.postDelayed(closeWhenAway, CLOSE_AFTER_MS)
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(closeWhenAway)
+        background.shutdown()
+        super.onDestroy()
+    }
+
+    private companion object {
+        const val CLOSE_AFTER_MS = 2 * 60_000L
     }
 }

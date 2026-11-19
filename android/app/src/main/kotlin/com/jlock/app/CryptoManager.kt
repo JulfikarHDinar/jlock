@@ -116,6 +116,14 @@ object CryptoManager {
         }
     }
 
+    /** [hashSecret] off the main thread, like [verifyAsync]; [done] gets the verifier, or null if it couldn't be made. */
+    fun hashAsync(secret: String, done: (String?) -> Unit) {
+        worker.execute {
+            val v = try { hashSecret(secret) } catch (_: Throwable) { null }
+            main.post { done(v) }
+        }
+    }
+
     private fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
         if (a.size != b.size) return false
         var r = 0

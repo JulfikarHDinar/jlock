@@ -16,11 +16,12 @@ fi
 version=$(sed -n 's/^version: *\([0-9][0-9.]*\)+.*/\1/p' pubspec.yaml)
 
 # Flutter embeds the build folder's path in the app code, so build where it holds no user name.
+# ARM only (64- and 32-bit, which covers every Android 11+ phone): x86_64 is for emulators and would add 17 MB.
 work=$(mktemp -d /tmp/jlock-release.XXXXXX)
 trap 'rm -rf "$work"' EXIT
 git archive HEAD | tar -x -C "$work"
 cp android/key.properties "$work/android/"
-(cd "$work" && flutter pub get >/dev/null && flutter build apk --release --obfuscate --split-debug-info=build/symbols)
+(cd "$work" && flutter pub get >/dev/null && flutter build apk --release --obfuscate --split-debug-info=build/symbols --target-platform android-arm,android-arm64)
 
 mkdir -p build/release "build/symbols/$version"
 apk="build/release/jlock-$version.apk"

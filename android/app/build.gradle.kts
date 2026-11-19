@@ -43,6 +43,14 @@ android {
         }
     }
 
+    // Native libraries (the Flutter engine and app code, nearly all of the APK) stored compressed: the download is about
+    // half the size. Android unpacks only the phone's own type at install, so the space used on the phone stays the same.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             // Without key.properties the debug key is used, so `flutter run --release` still works locally.

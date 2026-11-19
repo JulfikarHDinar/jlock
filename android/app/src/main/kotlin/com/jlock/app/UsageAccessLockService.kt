@@ -49,6 +49,7 @@ class UsageAccessLockService : Service() {
     private val resumed = LinkedHashMap<String, String>()
     private val paused = HashSet<String>() // keys in [resumed] that are paused but still visible
     private var lastEventTs = 0L
+    private var seenAtLast = 0 // events stamped [lastEventTs] applied so far (a query from that ms returns them again)
     private val homePkg by lazy { LockStore.homePackage(this) }
     private var dirty = true   // something besides usage events changed (screen on, keyguard gone): check fully
     private var fastUntil = 0L // poll quickly until then (uptime): an app is leaving the screen, another may open
@@ -196,17 +197,25 @@ class UsageAccessLockService : Service() {
 
     /**
      * Applies the usage events since the last poll to [resumed]: true if any changed it, false if none, null if they
-     * couldn't be read. Replaying the boundary millisecond is harmless: each activity simply ends in its latest state.
+     * couldn't be read. Once newer events are in, a query from the last event's millisecond returns that millisecond's
+     * events again ahead of them: those were applied already and are skipped (home would otherwise be seen twice).
      */
     private fun refreshOnScreen(): Boolean? {
         val now = System.currentTimeMillis()
-        val begin = if (lastEventTs == 0L) now - FIRST_QUERY_MS else lastEventTs
+        // The clock was set back behind the last event seen (by hand, or a network time fix): asking from there on would
+        // find nothing until the clock caught up — no lock meanwhile. Read on from now instead.
+        if (now < lastEventTs) { lastEventTs = now; seenAtLast = 0 }
+        val from = lastEventTs
+        val begin = if (from == 0L) now - FIRST_QUERY_MS else from
         val events = try { usm.queryEvents(begin, now) } catch (_: Throwable) { null } ?: return null
         val e = UsageEvents.Event()
         var changed = false
+        var replay = seenAtLast // the events of that last millisecond come back first: already applied
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            if (e.timeStamp > lastEventTs) lastEventTs = e.timeStamp
+            if (e.timeStamp == from && replay > 0) { replay--; continue }
+            if (e.timeStamp > lastEventTs) { lastEventTs = e.timeStamp; seenAtLast = 0 }
+            seenAtLast++
             // Settings asking for the phone's own PIN/fingerprint (Secure Folder, "confirm it's you"): not an app to
             // lock, and covering it would cancel its fingerprint check — leave it out of the picture entirely.
             if (LockStore.isCredentialScreen(e.packageName, e.className)) continue

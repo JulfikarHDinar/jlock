@@ -38,5 +38,5 @@ jLock is published as an APK on [GitHub Releases](https://github.com/JulfikarHDi
 ## Rules
 
 - Always sign with the same key.
-- Always publish the universal APK that the script builds. Split APKs (one per processor type) get different version codes, which would block updates between the two kinds.
+- Always publish the single APK that the script builds (both ARM processor types, so it runs on every phone). Split APKs (one per processor type) get different version codes, which would block updates between the two kinds.
 - Release builds are obfuscated. Keep `build/symbols/<version>` if you want to read crash stack traces from that version later.
